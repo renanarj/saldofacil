@@ -55,7 +55,7 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET and cross-origin (Firebase API calls)
   if (request.method !== 'GET') return;
-  if (!url.origin.match(/localhost|saldofacil/)) return;
+  if (!/^https?:\/\/(localhost(:\d+)?|.*\.saldofacil\.com)$/.test(url.origin)) return;
 
   // Network-first for HTML pages (always fresh)
   if (request.destination === 'document') {
