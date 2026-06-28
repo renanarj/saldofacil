@@ -21,12 +21,13 @@ import { getAuth, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/
 import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+  apiKey:            "AIzaSyD7P8vcLtLj61Fy8EZpB1SU9mg0zjZd2Gk",
+  authDomain:        "saldo-facil-14e97.firebaseapp.com",
+  projectId:         "saldo-facil-14e97",
+  storageBucket:     "saldo-facil-14e97.firebasestorage.app",
+  messagingSenderId: "796253943059",
+  appId:             "1:796253943059:web:5c73feddbcd387360a96e6",
+  measurementId:     "G-HTS74H97J6"
 };
 
 const app      = initializeApp(firebaseConfig);
