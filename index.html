@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2563EB">
+  <meta name="description" content="Saldo Fácil — Controle financeiro pessoal simples e bonito">
+  <title>Saldo Fácil — Entrar</title>
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/public/icons/icon-192.png">
+  <link rel="icon" type="image/png" href="/public/icons/icon-192.png">
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body class="auth-page" id="auth-body">
+
+  <!-- ─── Hero ──────────────────────────────────── -->
+  <div class="auth-hero">
+    <div class="auth-logo">💰</div>
+    <h1>Saldo Fácil</h1>
+    <p>Controle seu dinheiro em menos de 10 segundos por dia.</p>
+  </div>
+
+  <!-- ─── Card ──────────────────────────────────── -->
+  <div class="auth-card">
+
+    <!-- Tabs -->
+    <div class="auth-tabs" id="auth-tabs">
+      <button class="auth-tab active" data-tab="login">Entrar</button>
+      <button class="auth-tab"        data-tab="register">Criar conta</button>
+    </div>
+
+    <!-- ─── Login Form ─────────────────────────── -->
+    <div id="view-login">
+      <form id="form-login" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="login-email">E-mail</label>
+          <input class="form-input" type="email" id="login-email"
+                 placeholder="seu@email.com" autocomplete="email" required>
+          <span class="form-error">Informe um e-mail válido.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="login-password">Senha</label>
+          <div class="input-group" style="position:relative">
+            <input class="form-input" type="password" id="login-password"
+                   placeholder="••••••••" autocomplete="current-password" required
+                   style="padding-right:48px">
+            <button type="button" class="btn-icon" id="toggle-login-pw"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none"
+                    aria-label="Mostrar senha">👁️</button>
+          </div>
+          <span class="form-error">Informe sua senha.</span>
+        </div>
+
+        <div style="text-align:right;margin-bottom:var(--sp-5)">
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-goto-forgot">
+            Esqueceu a senha?
+          </button>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-login">
+          <span class="btn-text">Entrar</span>
+        </button>
+
+        <div class="divider">ou</div>
+
+        <button type="button" class="btn btn-google btn-full" id="btn-google-login">
+          <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M47.532 24.552c0-1.636-.147-3.216-.422-4.736H24.48v8.962h12.954c-.558 2.968-2.254 5.483-4.808 7.172v5.956h7.782c4.556-4.196 7.124-10.368 7.124-17.354z" fill="#4285F4"/>
+            <path d="M24.48 48c6.498 0 11.944-2.152 15.924-5.832l-7.782-5.956c-2.152 1.44-4.908 2.296-8.142 2.296-6.254 0-11.554-4.226-13.454-9.914H2.968v6.148C6.932 42.686 15.13 48 24.48 48z" fill="#34A853"/>
+            <path d="M11.026 28.594c-.48-1.44-.756-2.974-.756-4.554s.276-3.114.756-4.554v-6.148H2.968A23.988 23.988 0 000 24.04c0 3.876.928 7.546 2.968 10.702l8.058-6.148z" fill="#FBBC05"/>
+            <path d="M24.48 9.56c3.524 0 6.686 1.21 9.174 3.584l6.874-6.874C36.414 2.378 30.978 0 24.48 0 15.13 0 6.932 5.314 2.968 13.338l8.058 6.148c1.9-5.688 7.2-9.926 13.454-9.926z" fill="#EA4335"/>
+          </svg>
+          Continuar com Google
+        </button>
+
+      </form>
+    </div>
+
+    <!-- ─── Register Form ──────────────────────── -->
+    <div id="view-register" class="hidden">
+      <form id="form-register" novalidate>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-name">Seu nome</label>
+          <input class="form-input" type="text" id="reg-name"
+                 placeholder="Como quer ser chamado?" autocomplete="name" required>
+          <span class="form-error">Informe seu nome.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-email">E-mail</label>
+          <input class="form-input" type="email" id="reg-email"
+                 placeholder="seu@email.com" autocomplete="email" required>
+          <span class="form-error">Informe um e-mail válido.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-password">Senha</label>
+          <div style="position:relative">
+            <input class="form-input" type="password" id="reg-password"
+                   placeholder="Mínimo 6 caracteres" autocomplete="new-password" required
+                   style="padding-right:48px">
+            <button type="button" class="btn-icon" id="toggle-reg-pw"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none"
+                    aria-label="Mostrar senha">👁️</button>
+          </div>
+          <span class="form-error">Senha deve ter pelo menos 6 caracteres.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reg-confirm">Confirmar senha</label>
+          <input class="form-input" type="password" id="reg-confirm"
+                 placeholder="Repita a senha" autocomplete="new-password" required>
+          <span class="form-error">As senhas não coincidem.</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-register">
+          <span class="btn-text">Criar minha conta</span>
+        </button>
+
+        <div class="divider">ou</div>
+
+        <button type="button" class="btn btn-google btn-full" id="btn-google-register">
+          <svg width="20" height="20" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M47.532 24.552c0-1.636-.147-3.216-.422-4.736H24.48v8.962h12.954c-.558 2.968-2.254 5.483-4.808 7.172v5.956h7.782c4.556-4.196 7.124-10.368 7.124-17.354z" fill="#4285F4"/>
+            <path d="M24.48 48c6.498 0 11.944-2.152 15.924-5.832l-7.782-5.956c-2.152 1.44-4.908 2.296-8.142 2.296-6.254 0-11.554-4.226-13.454-9.914H2.968v6.148C6.932 42.686 15.13 48 24.48 48z" fill="#34A853"/>
+            <path d="M11.026 28.594c-.48-1.44-.756-2.974-.756-4.554s.276-3.114.756-4.554v-6.148H2.968A23.988 23.988 0 000 24.04c0 3.876.928 7.546 2.968 10.702l8.058-6.148z" fill="#FBBC05"/>
+            <path d="M24.48 9.56c3.524 0 6.686 1.21 9.174 3.584l6.874-6.874C36.414 2.378 30.978 0 24.48 0 15.13 0 6.932 5.314 2.968 13.338l8.058 6.148c1.9-5.688 7.2-9.926 13.454-9.926z" fill="#EA4335"/>
+          </svg>
+          Continuar com Google
+        </button>
+
+      </form>
+    </div>
+
+    <!-- ─── Forgot Password Form ───────────────── -->
+    <div id="view-forgot" class="hidden">
+      <button type="button" class="btn btn-ghost btn-sm" id="btn-back-to-login"
+              style="margin-bottom:var(--sp-4)">← Voltar</button>
+      <h2>Recuperar senha</h2>
+      <p style="color:var(--c-text-2);margin-bottom:var(--sp-6);font-size:var(--fs-base)">
+        Enviaremos um link para você redefinir sua senha.
+      </p>
+      <form id="form-forgot" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="forgot-email">E-mail</label>
+          <input class="form-input" type="email" id="forgot-email"
+                 placeholder="seu@email.com" autocomplete="email" required>
+          <span class="form-error">Informe um e-mail válido.</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="btn-forgot">
+          <span class="btn-text">Enviar link de recuperação</span>
+        </button>
+      </form>
+    </div>
+
+  </div><!-- /.auth-card -->
+
+  <!-- ─── Toast Container ────────────────────────── -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script type="module" src="/src/pages/auth.js"></script>
+  <script>
+    // Register Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
