@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2563EB">
+  <meta name="description" content="Saldo Fácil — Controle financeiro pessoal">
+  <title>Saldo Fácil</title>
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/public/icons/icon-192.png">
+  <link rel="icon" type="image/png" href="/public/icons/icon-192.png">
+  <link rel="stylesheet" href="/src/styles/main.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body class="app-page" id="app-body">
+
+<!-- ═══════ LOADING SPLASH ═══════════════════════════ -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-logo">💰 Saldo Fácil</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- ═══════ APP HEADER ═══════════════════════════════ -->
+<header class="app-header">
+  <div class="app-header-brand">💰 Saldo Fácil</div>
+  <div class="app-header-actions">
+    <button class="btn-icon" id="btn-theme" title="Alternar tema" aria-label="Alternar tema">🌙</button>
+    <button class="btn-icon" id="btn-notifications" title="Notificações" aria-label="Notificações">🔔</button>
+  </div>
+</header>
+
+<!-- ═══════ MAIN CONTENT ══════════════════════════════ -->
+<main id="app-main">
+
+  <!-- ───── DASHBOARD SECTION ──────────────────────── -->
+  <section id="section-dashboard" class="app-section">
+
+    <!-- Greeting -->
+    <div style="padding:var(--sp-5) var(--sp-5) 0;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <p style="color:var(--c-text-2);font-size:var(--fs-sm)">Olá, <span id="user-greeting" style="font-weight:600;color:var(--c-text)">usuário</span> 👋</p>
+        <p style="color:var(--c-text-3);font-size:var(--fs-xs)" id="dash-month-label"></p>
+      </div>
+    </div>
+
+    <!-- Balance Card -->
+    <div class="balance-card" id="balance-card">
+      <button class="balance-eye" id="btn-toggle-balance" aria-label="Ocultar saldo">👁️</button>
+      <span class="balance-label">Saldo atual</span>
+      <div class="balance-amount" id="balance-amount">R$ 0,00</div>
+      <div class="balance-stats">
+        <div class="balance-stat">
+          <span class="balance-stat-label">↑ Receitas</span>
+          <span class="balance-stat-value" id="dash-income">R$ 0</span>
+        </div>
+        <div class="balance-stat">
+          <span class="balance-stat-label">↓ Gastos</span>
+          <span class="balance-stat-value" id="dash-expense">R$ 0</span>
+        </div>
+        <div class="balance-stat">
+          <span class="balance-stat-label">= Saldo</span>
+          <span class="balance-stat-value" id="dash-net">R$ 0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="quick-action" data-action="expense">
+        <div class="quick-action-icon expense">➖</div>
+        <span class="quick-action-label">Gasto</span>
+      </button>
+      <button class="quick-action" data-action="income">
+        <div class="quick-action-icon income">➕</div>
+        <span class="quick-action-label">Receita</span>
+      </button>
+      <button class="quick-action" data-action="history">
+        <div class="quick-action-icon history">📋</div>
+        <span class="quick-action-label">Histórico</span>
+      </button>
+      <button class="quick-action" data-action="reports">
+        <div class="quick-action-icon reports">📊</div>
+        <span class="quick-action-label">Gráficos</span>
+      </button>
+    </div>
+
+    <!-- Financial Intelligence -->
+    <div style="padding:0 var(--sp-5) var(--sp-4)">
+      <div id="insights-container"></div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div style="padding:0 var(--sp-5)">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Últimos lançamentos</h3>
+          <button class="btn btn-ghost btn-sm" id="btn-see-all-tx">Ver todos</button>
+        </div>
+        <div id="recent-transactions">
+          <div class="empty-state" style="padding:var(--sp-8) var(--sp-4)">
+            <div class="empty-state-icon">💸</div>
+            <p class="empty-state-desc">Nenhum lançamento ainda. Registre seu primeiro gasto!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ───── HISTORY SECTION ────────────────────────── -->
+  <section id="section-history" class="app-section hidden">
+    <div class="section-header">
+      <h2 class="section-title">Histórico</h2>
+    </div>
+
+    <!-- Month selector -->
+    <div class="month-selector">
+      <button class="month-nav-btn" id="hist-prev-month">‹</button>
+      <span class="month-display" id="hist-month-display">Junho 2025</span>
+      <button class="month-nav-btn" id="hist-next-month">›</button>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar" id="hist-filter-bar">
+      <button class="filter-chip active" data-filter="all">Todos</button>
+      <button class="filter-chip" data-filter="expense">Gastos</button>
+      <button class="filter-chip" data-filter="income">Receitas</button>
+    </div>
+
+    <!-- Summary bar -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);padding:var(--sp-4) var(--sp-5)">
+      <div class="card" style="padding:var(--sp-4);text-align:center">
+        <p style="font-size:var(--fs-xs);color:var(--c-text-2);font-weight:600;text-transform:uppercase;letter-spacing:.3px">Receitas</p>
+        <p style="font-size:var(--fs-lg);font-weight:800;color:var(--c-success)" id="hist-income-total">R$ 0,00</p>
+      </div>
+      <div class="card" style="padding:var(--sp-4);text-align:center">
+        <p style="font-size:var(--fs-xs);color:var(--c-text-2);font-weight:600;text-transform:uppercase;letter-spacing:.3px">Gastos</p>
+        <p style="font-size:var(--fs-lg);font-weight:800;color:var(--c-danger)" id="hist-expense-total">R$ 0,00</p>
+      </div>
+    </div>
+
+    <!-- Transactions list -->
+    <div id="history-list" style="padding:0 var(--sp-5) var(--sp-5)"></div>
+
+  </section>
+
+  <!-- ───── GOALS SECTION ──────────────────────────── -->
+  <section id="section-goals" class="app-section hidden">
+    <div class="section-header">
+      <h2 class="section-title">Metas Financeiras</h2>
+      <button class="btn btn-primary btn-sm" id="btn-add-goal">+ Meta</button>
+    </div>
+
+    <div style="padding:0 var(--sp-5)" id="goals-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <h3 class="empty-state-title">Nenhuma meta</h3>
+        <p class="empty-state-desc">Crie um objetivo financeiro e acompanhe seu progresso.</p>
+        <button class="btn btn-primary" id="btn-add-goal-2" style="margin-top:var(--sp-4)">Criar meta</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── REPORTS SECTION ────────────────────────── -->
+  <section id="section-reports" class="app-section hidden">
+    <div class="section-header">
+      <h2 class="section-title">Relatórios</h2>
+    </div>
+
+    <!-- Month selector -->
+    <div class="month-selector">
+      <button class="month-nav-btn" id="rep-prev-month">‹</button>
+      <span class="month-display" id="rep-month-display">Junho 2025</span>
+      <button class="month-nav-btn" id="rep-next-month">›</button>
+    </div>
+
+    <!-- Chart tabs -->
+    <div class="chart-tabs">
+      <button class="chart-tab active" data-chart="by-category">Por categoria</button>
+      <button class="chart-tab" data-chart="monthly">Evolução mensal</button>
+      <button class="chart-tab" data-chart="income-vs-expense">Receitas vs Gastos</button>
+    </div>
+
+    <!-- Chart area -->
+    <div style="padding:0 var(--sp-5)">
+      <div class="card" style="padding:var(--sp-5)">
+        <div class="chart-container">
+          <canvas id="main-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Category breakdown -->
+      <div class="card" style="margin-top:var(--sp-4)">
+        <div class="card-header">
+          <h3 class="card-title">Detalhamento</h3>
+        </div>
+        <div id="chart-breakdown"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ───── MORE SECTION ───────────────────────────── -->
+  <section id="section-more" class="app-section hidden">
+
+    <!-- Profile Banner -->
+    <div class="profile-banner">
+      <div class="profile-avatar" id="profile-avatar">👤</div>
+      <div class="profile-name"  id="profile-name">Usuário</div>
+      <div class="profile-email" id="profile-email">email@exemplo.com</div>
+    </div>
+
+    <!-- Settings Menu -->
+    <div style="margin-top:var(--sp-5)">
+
+      <div class="settings-section">
+        <p class="settings-section-title">Financeiro</p>
+        <div class="settings-item" id="btn-goto-cards">
+          <div class="settings-icon" style="background:var(--c-primary-faint)">💳</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Cartões de Crédito</div>
+            <div class="settings-item-desc">Gerencie seus cartões e faturas</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </div>
+        <div class="settings-item" id="btn-goto-bills">
+          <div class="settings-icon" style="background:var(--c-warning-faint)">📅</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Contas Fixas</div>
+            <div class="settings-item-desc">Internet, energia, streaming…</div>
+          </div>
+          <span class="settings-arrow">›</span>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <p class="settings-section-title">Preferências</p>
+        <div class="settings-item">
+          <div class="settings-icon" style="background:#F3F4F6">🌙</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Modo escuro</div>
+          </div>
+          <label class="toggle-switch" aria-label="Modo escuro">
+            <input type="checkbox" id="toggle-dark-mode">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <p class="settings-section-title">Conta</p>
+        <div class="settings-item" id="btn-logout">
+          <div class="settings-icon" style="background:var(--c-danger-faint)">🚪</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title" style="color:var(--c-danger)">Sair da conta</div>
+          </div>
+          <span class="settings-arrow" style="color:var(--c-danger)">›</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ───── CARDS SUB-SECTION ──────────────────────── -->
+  <section id="section-cards" class="app-section hidden">
+    <div class="section-header">
+      <button class="btn-icon" id="btn-back-from-cards" aria-label="Voltar">←</button>
+      <h2 class="section-title">Cartões de Crédito</h2>
+      <button class="btn btn-primary btn-sm" id="btn-add-card">+ Cartão</button>
+    </div>
+    <div style="padding:0 var(--sp-5)" id="cards-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">💳</div>
+        <h3 class="empty-state-title">Nenhum cartão</h3>
+        <p class="empty-state-desc">Cadastre seus cartões e controle as faturas.</p>
+        <button class="btn btn-primary" id="btn-add-card-2" style="margin-top:var(--sp-4)">Adicionar cartão</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── FIXED BILLS SUB-SECTION ────────────────── -->
+  <section id="section-bills" class="app-section hidden">
+    <div class="section-header">
+      <button class="btn-icon" id="btn-back-from-bills" aria-label="Voltar">←</button>
+      <h2 class="section-title">Contas Fixas</h2>
+      <button class="btn btn-primary btn-sm" id="btn-add-bill">+ Conta</button>
+    </div>
+    <div id="bills-list">
+      <div class="empty-state">
+        <div class="empty-state-icon">📅</div>
+        <h3 class="empty-state-title">Nenhuma conta fixa</h3>
+        <p class="empty-state-desc">Cadastre suas despesas recorrentes e nunca esqueça de pagar.</p>
+        <button class="btn btn-primary" id="btn-add-bill-2" style="margin-top:var(--sp-4)">Adicionar conta</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════ FAB ═══════════════════════════════════════ -->
+<button class="fab" id="fab-add" aria-label="Registrar transação">＋</button>
+
+<!-- ═══════ BOTTOM NAVIGATION ════════════════════════ -->
+<nav class="bottom-nav" aria-label="Navegação principal">
+  <button class="nav-item active" data-section="dashboard" aria-label="Dashboard">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Início</span>
+  </button>
+  <button class="nav-item" data-section="history" aria-label="Histórico">
+    <span class="nav-icon">📋</span>
+    <span class="nav-label">Histórico</span>
+  </button>
+  <button class="nav-item" data-section="goals" aria-label="Metas">
+    <span class="nav-icon">🎯</span>
+    <span class="nav-label">Metas</span>
+  </button>
+  <button class="nav-item" data-section="reports" aria-label="Relatórios">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Gráficos</span>
+  </button>
+  <button class="nav-item" data-section="more" aria-label="Mais">
+    <span class="nav-icon">⚙️</span>
+    <span class="nav-label">Mais</span>
+  </button>
+</nav>
+
+<!-- ═══════ MODALS ════════════════════════════════════ -->
+
+<!-- Add / Edit Transaction -->
+<div class="modal-overlay" id="modal-transaction" role="dialog" aria-modal="true" aria-labelledby="modal-tx-title">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" id="modal-tx-close" aria-label="Fechar">✕</button>
+    <h2 class="modal-title" id="modal-tx-title">Registrar</h2>
+
+    <!-- Type toggle -->
+    <div class="type-toggle">
+      <button class="type-btn active-expense" id="type-expense" data-type="expense">
+        ➖ Gasto
+      </button>
+      <button class="type-btn" id="type-income" data-type="income">
+        ➕ Receita
+      </button>
+    </div>
+
+    <!-- Value input -->
+    <div class="value-display">
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+        <span class="value-prefix">R$</span>
+        <input type="number" class="value-input-big" id="tx-value"
+               placeholder="0,00" min="0.01" step="0.01" inputmode="decimal" autocomplete="off">
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="form-group" style="margin-bottom:var(--sp-4)">
+      <label class="form-label" for="tx-description">Descrição (opcional)</label>
+      <input class="form-input" type="text" id="tx-description"
+             placeholder="Ex: Almoço no trabalho" maxlength="100">
+    </div>
+
+    <!-- Date -->
+    <div class="form-group" style="margin-bottom:var(--sp-5)">
+      <label class="form-label" for="tx-date">Data</label>
+      <input class="form-input" type="date" id="tx-date">
+    </div>
+
+    <!-- Category -->
+    <div class="form-group">
+      <label class="form-label">Categoria</label>
+      <div class="category-grid" id="category-grid">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <!-- Hidden fields for edit mode -->
+    <input type="hidden" id="tx-id">
+
+    <button class="btn btn-primary btn-full btn-lg" id="btn-save-tx">
+      <span class="btn-text">Salvar</span>
+    </button>
+  </div>
+</div>
+
+<!-- Add / Edit Goal -->
+<div class="modal-overlay" id="modal-goal" role="dialog" aria-modal="true" aria-labelledby="modal-goal-title">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" id="modal-goal-close" aria-label="Fechar">✕</button>
+    <h2 class="modal-title" id="modal-goal-title">Nova Meta</h2>
+
+    <div class="form-group">
+      <label class="form-label" for="goal-name">Nome da meta</label>
+      <input class="form-input" type="text" id="goal-name" placeholder="Ex: Comprar carro" required>
+      <span class="form-error">Informe um nome para a meta.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="goal-target">Valor alvo</label>
+      <div class="input-group">
+        <span class="input-prefix">R$</span>
+        <input class="form-input" type="number" id="goal-target" placeholder="0,00" min="1" step="0.01" required>
+      </div>
+      <span class="form-error">Informe o valor alvo.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="goal-current">Valor já guardado</label>
+      <div class="input-group">
+        <span class="input-prefix">R$</span>
+        <input class="form-input" type="number" id="goal-current" placeholder="0,00" min="0" step="0.01">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="goal-deadline">Prazo (opcional)</label>
+      <input class="form-input" type="date" id="goal-deadline">
+    </div>
+
+    <input type="hidden" id="goal-id">
+
+    <button class="btn btn-primary btn-full btn-lg" id="btn-save-goal">
+      <span class="btn-text">Salvar meta</span>
+    </button>
+  </div>
+</div>
+
+<!-- Add / Edit Credit Card -->
+<div class="modal-overlay" id="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-card-title">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" id="modal-card-close" aria-label="Fechar">✕</button>
+    <h2 class="modal-title" id="modal-card-title">Novo Cartão</h2>
+
+    <div class="form-group">
+      <label class="form-label" for="card-name">Nome do cartão</label>
+      <input class="form-input" type="text" id="card-name" placeholder="Ex: Nubank" required>
+      <span class="form-error">Informe o nome do cartão.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="card-limit">Limite</label>
+      <div class="input-group">
+        <span class="input-prefix">R$</span>
+        <input class="form-input" type="number" id="card-limit" placeholder="0,00" min="0" step="0.01">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="card-bill">Fatura atual</label>
+      <div class="input-group">
+        <span class="input-prefix">R$</span>
+        <input class="form-input" type="number" id="card-bill" placeholder="0,00" min="0" step="0.01">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="card-due-day">Dia de vencimento</label>
+      <input class="form-input" type="number" id="card-due-day" placeholder="Ex: 15" min="1" max="31">
+    </div>
+
+    <input type="hidden" id="card-id">
+
+    <button class="btn btn-primary btn-full btn-lg" id="btn-save-card">
+      <span class="btn-text">Salvar cartão</span>
+    </button>
+  </div>
+</div>
+
+<!-- Add / Edit Fixed Bill -->
+<div class="modal-overlay" id="modal-bill" role="dialog" aria-modal="true" aria-labelledby="modal-bill-title">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" id="modal-bill-close" aria-label="Fechar">✕</button>
+    <h2 class="modal-title" id="modal-bill-title">Nova Conta Fixa</h2>
+
+    <div class="form-group">
+      <label class="form-label" for="bill-name">Nome</label>
+      <input class="form-input" type="text" id="bill-name" placeholder="Ex: Netflix" required>
+      <span class="form-error">Informe o nome da conta.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="bill-value">Valor</label>
+      <div class="input-group">
+        <span class="input-prefix">R$</span>
+        <input class="form-input" type="number" id="bill-value" placeholder="0,00" min="0" step="0.01" required>
+      </div>
+      <span class="form-error">Informe o valor.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="bill-due-day">Dia de vencimento</label>
+      <input class="form-input" type="number" id="bill-due-day" placeholder="Ex: 10" min="1" max="31" required>
+      <span class="form-error">Informe o dia de vencimento.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="bill-category">Categoria</label>
+      <select class="form-input" id="bill-category">
+        <option value="Moradia">🏠 Moradia / Aluguel</option>
+        <option value="Internet">📶 Internet</option>
+        <option value="Energia">⚡ Energia</option>
+        <option value="Água">💧 Água</option>
+        <option value="Streaming">📺 Streaming</option>
+        <option value="Celular">📱 Celular</option>
+        <option value="Academia">🏋️ Academia</option>
+        <option value="Seguro">🛡️ Seguro</option>
+        <option value="Outros">📌 Outros</option>
+      </select>
+    </div>
+
+    <input type="hidden" id="bill-id">
+
+    <button class="btn btn-primary btn-full btn-lg" id="btn-save-bill">
+      <span class="btn-text">Salvar conta</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════ TOAST CONTAINER ══════════════════════════ -->
+<div class="toast-container" id="toast-container"></div>
+
+<script type="module" src="/src/pages/app.js"></script>
+<script>
+  // Register Service Worker (PWA)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
