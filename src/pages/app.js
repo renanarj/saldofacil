@@ -2,7 +2,7 @@
 // SALDO FÁCIL — Main App Controller
 // ================================================
 
-import { observeAuth, logoutUser, getCurrentUser } from '../services/auth.service.js';
+import { observeAuth, logoutUser } from '../services/auth.service.js';
 import {
   addTransaction, updateTransaction, deleteTransaction, getTransactionsByMonth, getTransactions,
   addGoal, updateGoal, deleteGoal, getGoals,
@@ -13,6 +13,10 @@ import {
   showToast, openModal, closeModal, closeAllModals, confirmDialog,
   formatCurrency, formatDate, formatDateInput, formatDateShort, monthLabel
 } from '../components/ui.js';
+import {
+  areNotificationsEnabled, enableNotifications, disableNotifications, 
+  initNotifications, setupNotificationHandler
+} from '../services/notification.service.js';
 import { Timestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 // ─── Categories ──────────────────────────────────────
@@ -38,6 +42,13 @@ const INCOME_CATEGORIES = [
   { id: 'gift',      emoji: '🎁', label: 'Presente'    },
   { id: 'rent',      emoji: '🏢', label: 'Aluguel'     },
   { id: 'other',     emoji: '💰', label: 'Outros'      }
+];
+
+// ─── Payment Methods ──────────────────────────────────
+const PAYMENT_METHODS = [
+  { id: 'pix',    emoji: '💳', label: 'Pix'      },
+  { id: 'card',   emoji: '🏦', label: 'Cartão'   },
+  { id: 'cash',   emoji: '💵', label: 'Dinheiro' }
 ];
 
 // ─── App State ───────────────────────────────────────
@@ -88,11 +99,19 @@ async function initApp() {
   // Sync dark mode toggle
   document.getElementById('toggle-dark-mode').checked = darkMode;
 
+  // Sync notifications toggle
+  const notificationsEnabled = areNotificationsEnabled();
+  document.getElementById('toggle-notifications').checked = notificationsEnabled;
+
   // Set today's date on transaction form
   document.getElementById('tx-date').value = formatDateInput(new Date());
 
   // Build category grid for expense (default)
   buildCategoryGrid('expense');
+
+  // Initialize notifications
+  initNotifications();
+  setupNotificationHandler();
 
   // Load data
   await Promise.all([loadDashboard(), loadGoals()]);
@@ -196,7 +215,9 @@ function updateDashboardStats() {
   const balance = allTransactions.reduce((s, t) => t.type === 'income' ? s + t.value : s - t.value, 0);
   const net     = income - expense;
 
-  document.getElementById('balance-amount').textContent = balanceVisible ? formatCurrency(balance) : '••••••';
+  const balanceEl = document.getElementById('balance-amount');
+  balanceEl.textContent = balanceVisible ? formatCurrency(balance) : '••••••';
+  balanceEl.classList.toggle('negative', balance < 0);
   document.getElementById('dash-income').textContent    = formatCurrencyShort(income);
   document.getElementById('dash-expense').textContent   = formatCurrencyShort(expense);
   document.getElementById('dash-net').textContent       = formatCurrencyShort(net);
@@ -230,6 +251,11 @@ function renderTransactionItem(tx) {
   const date = tx.date instanceof Timestamp ? tx.date.toDate() : new Date(tx.date);
   const sign = tx.type === 'income' ? '+' : '-';
   const cls  = tx.type === 'income' ? 'income' : 'expense';
+  
+  // Get payment method info for expenses
+  const paymentMethod = tx.type === 'expense' && tx.paymentMethod 
+    ? PAYMENT_METHODS.find(m => m.id === tx.paymentMethod) 
+    : null;
 
   return `
     <div class="transaction-item" data-id="${tx.id}">
@@ -237,6 +263,7 @@ function renderTransactionItem(tx) {
       <div class="transaction-info">
         <div class="transaction-category">${cat.label}</div>
         <div class="transaction-desc">${tx.description || ''}</div>
+        ${paymentMethod ? `<div class="transaction-payment-method">${paymentMethod.emoji} ${paymentMethod.label}</div>` : ''}
       </div>
       <div class="transaction-right">
         <div class="transaction-value ${cls}">${sign}${formatCurrency(tx.value)}</div>
@@ -336,6 +363,7 @@ function generateInsights() {
 
 let selectedType     = 'expense';
 let selectedCategory = 'food';
+let selectedPaymentMethod = 'pix';
 let editingTxId      = null;
 
 document.getElementById('fab-add').addEventListener('click', () => openTransactionModal('expense'));
@@ -345,6 +373,7 @@ function openTransactionModal(type = 'expense', txData = null) {
   editingTxId = txData?.id || null;
   selectedType = type;
   selectedCategory = txData?.category || (type === 'expense' ? 'food' : 'salary');
+  selectedPaymentMethod = txData?.paymentMethod || 'pix';
 
   // Set title
   document.getElementById('modal-tx-title').textContent = txData ? 'Editar lançamento' : 'Registrar';
@@ -364,6 +393,8 @@ function openTransactionModal(type = 'expense', txData = null) {
   document.getElementById('tx-id').value = txData?.id || '';
 
   buildCategoryGrid(type, selectedCategory);
+  buildPaymentMethodGrid(selectedPaymentMethod);
+  document.getElementById('payment-method-group').style.display = (type === 'expense' ? 'block' : 'none');
   openModal('modal-transaction');
 
   // Focus value input after modal opens
@@ -378,6 +409,8 @@ document.getElementById('type-expense').addEventListener('click', () => {
   document.getElementById('type-income').classList.remove('active-income', 'active-expense');
   selectedCategory = 'food';
   buildCategoryGrid('expense', 'food');
+  document.getElementById('payment-method-group').style.display = 'block';
+  buildPaymentMethodGrid('pix');
 });
 
 document.getElementById('type-income').addEventListener('click', () => {
@@ -387,6 +420,7 @@ document.getElementById('type-income').addEventListener('click', () => {
   document.getElementById('type-expense').classList.remove('active-expense', 'active-income');
   selectedCategory = 'salary';
   buildCategoryGrid('income', 'salary');
+  document.getElementById('payment-method-group').style.display = 'none';
 });
 
 function buildCategoryGrid(type, selected = null) {
@@ -406,6 +440,30 @@ function buildCategoryGrid(type, selected = null) {
       grid.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
       item.classList.add('selected');
       selectedCategory = item.dataset.id;
+    });
+    item.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
+    });
+  });
+}
+
+function buildPaymentMethodGrid(selected = 'pix') {
+  const grid = document.getElementById('payment-method-grid');
+  if (!grid) return;
+
+  selectedPaymentMethod = selected;
+
+  grid.innerHTML = PAYMENT_METHODS.map(method => `
+    <div class="payment-method-item ${method.id === selected ? 'selected' : ''}" data-id="${method.id}" role="button" tabindex="0">
+      <span class="payment-emoji">${method.emoji}</span>
+      <span class="payment-label">${method.label}</span>
+    </div>`).join('');
+
+  grid.querySelectorAll('.payment-method-item').forEach(item => {
+    item.addEventListener('click', () => {
+      grid.querySelectorAll('.payment-method-item').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      selectedPaymentMethod = item.dataset.id;
     });
     item.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); item.click(); }
@@ -439,7 +497,14 @@ document.getElementById('btn-save-tx').addEventListener('click', async () => {
 
   try {
     const date = Timestamp.fromDate(new Date(dateStr + 'T12:00:00'));
-    const data = { type: selectedType, value, category: selectedCategory, description, date };
+    const data = { 
+      type: selectedType, 
+      value, 
+      category: selectedCategory, 
+      description, 
+      date,
+      ...(selectedType === 'expense' && { paymentMethod: selectedPaymentMethod })
+    };
 
     if (editingTxId) {
       await updateTransaction(currentUser.uid, editingTxId, data);
@@ -734,6 +799,7 @@ function renderChart(txs, type) {
   if (type === 'by-category') renderByCategoryChart(ctx, txs);
   else if (type === 'monthly') renderMonthlyChart(ctx);
   else if (type === 'income-vs-expense') renderIncomeVsExpenseChart(ctx, txs);
+  else if (type === 'by-payment-method') renderByPaymentMethodChart(ctx, txs);
 }
 
 function renderByCategoryChart(ctx, txs) {
@@ -857,6 +923,64 @@ function renderIncomeVsExpenseChart(ctx, txs) {
     }
   });
   document.getElementById('chart-breakdown').innerHTML = '';
+}
+
+function renderByPaymentMethodChart(ctx, txs) {
+  const expenses = txs.filter(t => t.type === 'expense');
+  const byPayment = {};
+  
+  expenses.forEach(t => {
+    const method = t.paymentMethod || 'cash';
+    byPayment[method] = (byPayment[method] || 0) + t.value;
+  });
+
+  const methods = Object.keys(byPayment);
+  const vals = methods.map(m => byPayment[m]);
+  const total = vals.reduce((s, v) => s + v, 0);
+
+  const labels = methods.map(m => {
+    const method = PAYMENT_METHODS.find(p => p.id === m) || { emoji: '💵', label: m };
+    return `${method.emoji} ${method.label}`;
+  });
+
+  if (methods.length === 0) {
+    document.getElementById('main-chart').closest('.card').innerHTML =
+      '<div class="empty-state" style="padding:var(--sp-8)"><div class="empty-state-icon">💳</div><p class="empty-state-desc">Nenhum gasto neste mês.</p></div>';
+    document.getElementById('chart-breakdown').innerHTML = '';
+    return;
+  }
+
+  const COLORS = ['#06B6D4', '#8B5CF6', '#F59E0B'];
+
+  mainChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: vals, backgroundColor: COLORS.slice(0, vals.length), borderWidth: 2, borderColor: getComputedStyle(document.body).getPropertyValue('--c-surface') }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 12, font: { size: 12 }, color: getComputedStyle(document.body).getPropertyValue('--c-text-2') } },
+        tooltip: { callbacks: { label: (ctx) => ` ${ctx.label}: ${formatCurrency(ctx.raw)} (${((ctx.raw/total)*100).toFixed(1)}%)` } }
+      }
+    }
+  });
+
+  // Breakdown table
+  const breakdown = document.getElementById('chart-breakdown');
+  breakdown.innerHTML = methods.map((m, i) => {
+    const method = PAYMENT_METHODS.find(p => p.id === m) || { emoji: '💵', label: m };
+    const pct = total ? ((vals[i] / total) * 100).toFixed(1) : 0;
+    return `
+      <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--c-border)">
+        <div class="color-dot" style="background:${COLORS[i % COLORS.length]}"></div>
+        <span style="font-size:20px">${method.emoji}</span>
+        <span style="flex:1;font-weight:500">${method.label}</span>
+        <span style="color:var(--c-text-2);font-size:var(--fs-sm)">${pct}%</span>
+        <span style="font-weight:700">${formatCurrency(vals[i])}</span>
+      </div>`;
+  }).join('');
 }
 
 // Chart tabs
@@ -1165,6 +1289,22 @@ document.getElementById('toggle-dark-mode').addEventListener('change', (e) => {
   darkMode = e.target.checked;
   localStorage.setItem('sf-dark', darkMode);
   applyTheme();
+});
+
+// Notifications toggle
+document.getElementById('toggle-notifications').addEventListener('change', async (e) => {
+  if (e.target.checked) {
+    const granted = await enableNotifications();
+    if (!granted) {
+      e.target.checked = false;
+      showToast('Permissão de notificações negada.', 'warning');
+    } else {
+      showToast('Notificações ativadas! Você receberá um lembrete às 8 da manhã.', 'success');
+    }
+  } else {
+    disableNotifications();
+    showToast('Notificações desativadas.', 'info');
+  }
 });
 
 // Logout

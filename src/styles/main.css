@@ -487,6 +487,9 @@ ul { list-style: none; }
   margin: var(--sp-1) 0 var(--sp-5);
   position: relative;
 }
+.balance-amount.negative {
+  color: #ff6b6b;
+}
 .balance-amount .cents {
   font-size: var(--fs-xl);
   font-weight: 600;
@@ -647,6 +650,11 @@ ul { list-style: none; }
   text-overflow: ellipsis;
   margin-top: 2px;
 }
+.transaction-payment-method {
+  font-size: var(--fs-xs);
+  color: var(--c-text-3);
+  margin-top: 4px;
+}
 .transaction-right { text-align: right; flex-shrink: 0; }
 .transaction-value {
   font-size: var(--fs-md);
@@ -727,7 +735,7 @@ ul { list-style: none; }
 /* FAB — Add Transaction */
 .fab {
   position: fixed;
-  bottom: calc(var(--bottom-nav-h) + var(--sp-4));
+  bottom: calc(var(--bottom-nav-h) + var(--sp-8));
   right: var(--sp-5);
   width: 56px;
   height: 56px;
@@ -917,6 +925,41 @@ ul { list-style: none; }
   letter-spacing: .2px;
 }
 .category-item.selected .category-label { color: var(--c-primary); }
+
+/* Payment Methods Grid */
+.payment-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+.payment-method-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-2);
+  border-radius: var(--r-lg);
+  border: 2px solid transparent;
+  background: var(--c-surface-2);
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.payment-method-item:hover { background: var(--c-primary-faint); border-color: rgba(37,99,235,.2); }
+.payment-method-item.selected {
+  background: var(--c-primary-faint);
+  border-color: var(--c-primary);
+}
+.payment-emoji { font-size: 24px; }
+.payment-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--c-text-2);
+  text-align: center;
+  letter-spacing: .2px;
+}
+.payment-method-item.selected .payment-label { color: var(--c-primary); }
 
 /* ─── Goals ──────────────────────────────────────── */
 .goal-card {
@@ -1268,7 +1311,7 @@ ul { list-style: none; }
 /* ─── Toast ───────────────────────────────────────── */
 .toast-container {
   position: fixed;
-  bottom: calc(var(--bottom-nav-h) + var(--sp-4));
+  bottom: calc(var(--bottom-nav-h) + var(--sp-8));
   left: var(--sp-4);
   right: var(--sp-4);
   z-index: 1000;
