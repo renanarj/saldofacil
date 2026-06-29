@@ -217,7 +217,7 @@ function updateDashboardStats() {
 
   const balanceEl = document.getElementById('balance-amount');
   balanceEl.textContent = balanceVisible ? formatCurrency(balance) : '••••••';
-  balanceEl.classList.toggle('negative', balance < 0);
+  balanceEl.classList.toggle('negative', net < 0);
   document.getElementById('dash-income').textContent    = formatCurrencyShort(income);
   document.getElementById('dash-expense').textContent   = formatCurrencyShort(expense);
   document.getElementById('dash-net').textContent       = formatCurrencyShort(net);
